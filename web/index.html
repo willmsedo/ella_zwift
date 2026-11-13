@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111717">
+    <title>Ella Zwift — indoor route riding</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="wordmark" href="/" aria-label="Ella Zwift home">
+        <span class="wordmark-mark">E</span>
+        <span>ELLA <b>ZWIFT</b></span>
+      </a>
+      <div class="topbar-right">
+        <span class="local-pill"><span class="dot"></span> LOCAL SESSION</span>
+        <a class="quiet-link" href="/#setup">SETUP</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div>
+          <p class="eyebrow">INDOOR ROUTE STUDIO <span>—</span> 01</p>
+          <h1>Ride your<br><em>own roads.</em></h1>
+          <p class="intro-copy">A route from your rides. Your KICKR. Your pace.</p>
+        </div>
+        <div class="intro-aside">
+          <span class="tiny-label">BUILT FOR</span>
+          <strong>THE LONG WAY HOME</strong>
+          <span>GPX ROUTES · KICKR · STRAVA</span>
+        </div>
+      </section>
+
+      <section class="ride-grid">
+        <div class="panel route-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">01 / ROUTE</p>
+              <h2 id="route-name">Choose a route</h2>
+            </div>
+            <label class="file-button" for="gpx-file">IMPORT GPX</label>
+            <input id="gpx-file" type="file" accept=".gpx,application/gpx+xml,application/xml,text/xml">
+          </div>
+          <p id="route-hint" class="muted">Import a GPX file or load one of your Strava rides.</p>
+          <div class="map-frame">
+            <svg id="route-map" viewBox="0 0 900 500" role="img" aria-label="Route map">
+              <defs>
+                <pattern id="map-grid" width="36" height="36" patternUnits="userSpaceOnUse">
+                  <path d="M 36 0 L 0 0 0 36" fill="none" stroke="#293332" stroke-width="1"/>
+                </pattern>
+                <filter id="route-glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="5" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <rect width="900" height="500" fill="url(#map-grid)"/>
+              <g id="map-layers"></g>
+              <text class="map-empty" x="450" y="245" text-anchor="middle">YOUR ROUTE WILL APPEAR HERE</text>
+              <text class="map-empty-sub" x="450" y="273" text-anchor="middle">IMPORT A GPX TO BEGIN</text>
+            </svg>
+            <div class="map-legend">
+              <span><i class="legend-live"></i> YOU</span>
+              <span><i class="legend-ghost"></i> PAST RIDE</span>
+              <span id="map-distance">— KM</span>
+            </div>
+          </div>
+          <div class="route-stats">
+            <div><span>DISTANCE</span><strong id="route-distance">—</strong><small>KM</small></div>
+            <div><span>ASCENT</span><strong id="route-ascent">—</strong><small>M</small></div>
+            <div><span>DESCENT</span><strong id="route-descent">—</strong><small>M</small></div>
+            <div><span>GRADE NOW</span><strong id="route-grade">0.0</strong><small>%</small></div>
+          </div>
+          <div class="elevation-wrap">
+            <div class="subhead"><span>ELEVATION PROFILE</span><span id="elevation-range">—</span></div>
+            <svg id="elevation-chart" viewBox="0 0 900 130" role="img" aria-label="Elevation profile"></svg>
+          </div>
+        </div>
+
+        <aside class="panel ride-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">02 / TRAINER</p>
+              <h2>KICKR connection</h2>
+            </div>
+            <span id="trainer-indicator" class="status-tag">NOT CONNECTED</span>
+          </div>
+          <p id="trainer-message" class="muted">Connect to read the trainer's capabilities and live metrics.</p>
+          <div class="button-stack">
+            <button id="connect-trainer" class="button button-outline">CONNECT KICKR</button>
+            <button id="enable-control" class="button button-primary" disabled>ENABLE CONTROL</button>
+            <button id="disconnect-trainer" class="button button-text" disabled>DISCONNECT</button>
+          </div>
+          <div id="trainer-diagnostics" class="diagnostic">FTMS diagnostics will appear after connecting.</div>
+          <div class="safety-note">
+            <span class="safety-icon">!</span>
+            <p>Resistance control is manual. Initial limit: <b>−5% to +8%</b>, ramped by at most 1% per second. Stop if anything feels unexpected.</p>
+          </div>
+          <div class="subhead ride-title"><span>LIVE RIDE</span><span id="ride-state">READY</span></div>
+          <div class="metrics-grid">
+            <div class="metric"><span>SPEED</span><strong id="metric-speed">0.0</strong><small>KM/H</small></div>
+            <div class="metric"><span>POWER</span><strong id="metric-power">—</strong><small>W</small></div>
+            <div class="metric"><span>CADENCE</span><strong id="metric-cadence">—</strong><small>RPM</small></div>
+            <div class="metric"><span>ELAPSED</span><strong id="metric-time">00:00</strong><small>TIME</small></div>
+          </div>
+          <div class="ride-buttons">
+            <button id="start-ride" class="button button-primary" disabled>START RIDE</button>
+            <button id="pause-ride" class="button button-outline" disabled>PAUSE</button>
+            <button id="finish-ride" class="button button-danger" disabled>FINISH</button>
+          </div>
+          <label class="weight-setting" for="rider-weight">
+            <span>RIDER + BIKE WEIGHT</span>
+            <span class="weight-input"><input id="rider-weight" type="number" min="35" max="200" step="0.5" placeholder="Set later"><b>KG</b></span>
+          </label>
+          <p class="fine-print">Optional for now. Used later for virtual-speed modeling; the trainer's reported speed is shown today.</p>
+          <label class="auto-upload"><input id="auto-upload" type="checkbox" checked> Upload finished rides to Strava when connected</label>
+          <p id="ride-message" class="ride-message" aria-live="polite"></p>
+        </aside>
+      </section>
+
+      <section class="lower-grid">
+        <section class="panel strava-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">03 / RIDE HISTORY</p>
+              <h2>Find a familiar road.</h2>
+            </div>
+            <span id="strava-indicator" class="status-tag">NOT CONNECTED</span>
+          </div>
+          <p class="muted">Connect your Strava account to load your rides, group repeat routes, and choose ghost riders.</p>
+          <div class="strava-actions">
+            <button id="connect-strava" class="button button-outline">CONNECT STRAVA</button>
+            <button id="refresh-strava" class="button button-text" disabled>REFRESH ACTIVITIES</button>
+            <button id="load-older" class="button button-text" disabled>LOAD OLDER RIDES</button>
+            <button id="disconnect-strava" class="button button-text" disabled>DISCONNECT</button>
+            <button id="register-webhook" class="button button-text" disabled>REGISTER WEBHOOK</button>
+          </div>
+          <div id="strava-message" class="inline-message" aria-live="polite"></div>
+          <div id="activity-groups" class="activity-groups">
+            <div class="empty-note">Your Strava route groups will appear here after connecting.</div>
+          </div>
+        </section>
+        <section class="panel history-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">04 / LOCAL LOG</p>
+              <h2>Recent rides</h2>
+            </div>
+            <span class="local-tag">SAVED ON THIS DEVICE</span>
+          </div>
+          <div id="ride-history" class="ride-history">
+            <div class="empty-note">No recorded rides yet.</div>
+          </div>
+          <div class="future-note">
+            <span>ON THE ROADMAP</span>
+            <p>Heart-rate import, richer ride comparisons, and optional Street View. Nothing is sent to Garmin or Google in this version.</p>
+          </div>
+        </section>
+      </section>
+
+      <section id="setup" class="footer-note">
+        <p><b>LOCAL BY DESIGN.</b> Route files and ride history stay on this computer. Strava access is optional and handled by the local service.</p>
+        <a href="https://github.com/willmsedo/ella_zwift" target="_blank" rel="noreferrer">PROJECT NOTES ↗</a>
+      </section>
+    </main>
+  </body>
+</html>

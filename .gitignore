@@ -1,0 +1,8 @@
+strava.local.json
+data/
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+cloudflare/.wrangler/
+cloudflare/.dev.vars
