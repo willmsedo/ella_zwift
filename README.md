@@ -10,11 +10,10 @@ out of the web page. GPX files and recorded rides stay on this computer.
 
 ## Pick this up later
 
-The implementation and setup guide are saved in this local project folder.
-The changes have **not** been committed or pushed to GitHub, so they will not
-automatically appear on another computer. If you plan to continue on your Mac,
-first copy this project there or publish this working copy to a private GitHub
-repository; do not copy `strava.local.json` or the local `data/` folder.
+The project is intended to be cloned from the private GitHub repository onto
+your Mac. Follow [Clone and run on macOS](#clone-and-run-on-macos) first.
+Git only transfers committed and pushed changes. Credentials, keychain entries,
+and locally recorded rides are not included in a clone.
 
 **Current state**
 
@@ -22,7 +21,7 @@ repository; do not copy `strava.local.json` or the local `data/` folder.
   credentials have not been set up.
 - Cloudflare Worker code is included, but it has not been deployed; the KV
   namespace ID in `cloudflare/wrangler.toml` is still a placeholder.
-- The trainer is believed to be a KICKR v3, but its exact model and firmware
+- The trainer is believed to be a KICKR v5, but its exact model and firmware
   are unconfirmed. First hardware target is Mac + Chrome.
 - The app supports FTMS only. Do not enable resistance control if the trainer
   does not advertise FTMS.
@@ -43,17 +42,10 @@ repository; do not copy `strava.local.json` or the local `data/` folder.
    placeholder in `cloudflare/wrangler.toml`; add the deployed Worker URL and
    the same `ADMIN_TOKEN` to `strava.local.json`. Restart the local app and
    click **Register webhook** after connecting Strava.
-4. **Start locally.** On macOS, from the project directory run:
-
-   ```sh
-   python3 -m pip install -r requirements.txt
-   python3 app.py
-   ```
-
-   Open `http://localhost:8765` in desktop Chrome. Keep the terminal open.
+4. **Start locally.** Follow [Clone and run on macOS](#clone-and-run-on-macos).
    Connect Strava, verify the activity list loads, and verify the Strava panel
    says the deauthorization webhook is active.
-5. **Test the trainer cautiously.** Use the [KICKR connection steps](#exact-kickr-v3-connection-steps).
+5. **Test the trainer cautiously.** Use the [KICKR connection steps](#kickr-v5-connection-steps).
    Close Wahoo and other trainer apps first. Confirm the FTMS diagnostics
    before enabling control; keep the bike stable and begin at 0% grade with a
    short, easy route. Leave auto-upload off until you intentionally want a test
@@ -77,12 +69,59 @@ When resuming with an assistant, open this project folder and say:
 - A Bluetooth-capable computer and a powered-on KICKR
 - Optional: a Strava API application for activity sync and upload
 
-The first implementation uses the standard Bluetooth Fitness Machine Service
-(FTMS). Some KICKR v3 firmware/platform combinations may expose only Wahoo's
-proprietary Bluetooth or ANT+ FE-C control. If FTMS is unavailable, the app
-will report that instead of guessing at a proprietary control command.
+The trainer implementation uses the standard Bluetooth Fitness Machine Service
+(FTMS). Wahoo's [KICKR v5 firmware release notes](https://support.wahoofitness.com/hc/en-us/articles/360016826680-KICKR-v5-2020-Firmware-Release-Notes)
+list FTMS support in firmware 4.2.1 and 4.2.3; update to the latest firmware
+offered in the Wahoo app. FTMS and actual resistance control have not yet been
+tested on your trainer. If FTMS is unavailable, the app reports that instead
+of attempting proprietary Wahoo or ANT+ commands.
 
-## Run locally
+## Clone and run on macOS
+
+1. Install [Google Chrome](https://www.google.com/chrome/) and
+   [Python 3](https://www.python.org/downloads/macos/) (3.10 or newer). Open
+   **Terminal** and run `python3 --version` to confirm the version.
+2. Ensure Git is available by running `git --version`. If macOS prompts to
+   install Command Line Tools, accept the prompt and finish installation.
+3. Sign in to GitHub on the Mac using an account that can access the private
+   repository. One option is [GitHub CLI](https://cli.github.com/): install
+   it, run `gh auth login`, select **GitHub.com**, choose **HTTPS**, agree to
+   authenticate Git, and complete the browser sign-in. Do not paste tokens
+   into chat.
+4. Clone the repository and create an isolated Python environment:
+
+   ```sh
+   cd ~
+   git clone https://github.com/willmsedo/ella_zwift.git
+   cd ella_zwift
+   python3 -m venv .venv
+   source .venv/bin/activate
+   python -m pip install -r requirements.txt
+   python app.py
+   ```
+
+   If cloning fails with repository not found or an authentication error,
+   verify that the signed-in GitHub account has access to this private repo.
+   The clone contains the committed code only; it does not contain Strava
+   credentials or rides recorded on another computer.
+5. Open <http://localhost:8765> in Chrome and keep Terminal open. The app
+   displays the route as a stylized line map, not a street-map basemap.
+   Import a GPX file to preview it even before setting up Strava or a trainer.
+   To stop the service, press **Control-C** in Terminal.
+6. To start it again later, open Terminal and run:
+
+   ```sh
+   cd ~/ella_zwift
+   source .venv/bin/activate
+   python app.py
+   ```
+
+   To get later committed updates, stop the service and run `git pull` inside
+   `~/ella_zwift`. If dependencies have changed, rerun
+   `python -m pip install -r requirements.txt` with the environment activated.
+   Do not overwrite local edits when updating.
+
+## Run on Windows
 
 ```powershell
 cd C:\Users\willm\ella_zwift
@@ -91,9 +130,7 @@ python app.py
 ```
 
 Open <http://localhost:8765> in Chrome. Keep the terminal open while using the
-app. The Python service only listens on the local computer. On macOS, install
-Python 3.10+ and use `python3 -m pip install -r requirements.txt` followed by
-`python3 app.py`; open the same localhost URL in Chrome.
+app. The Python service only listens on the local computer.
 
 ## Exact Strava setup
 
@@ -116,7 +153,11 @@ Python 3.10+ and use `python3 -m pip install -r requirements.txt` followed by
    }
    ```
 
-4. Save the file, restart `python app.py`, and open <http://localhost:8765>.
+   On the Mac, open a second Terminal window, run `cd ~/ella_zwift` and then
+   `nano strava.local.json`. Enter the JSON with your own values, press
+   **Control-O**, press **Return**, then press **Control-X** to save and exit.
+   The file is local and ignored by Git.
+4. Save the file, restart `python app.py` in the activated environment, and open <http://localhost:8765>.
    Click **Connect Strava**. Strava will show an authorization page for this
    app; approve the requested activity access. The browser should return to
    Ella Zwift with Strava connected.
@@ -135,8 +176,9 @@ Python 3.10+ and use `python3 -m pip install -r requirements.txt` followed by
 
 The app requests `activity:read_all` so it can list your private activities,
 and `activity:write` so it can upload activities. Strava does not give the app
-your password. Access and refresh tokens are kept in the operating system
-keychain; the client secret is in `strava.local.json`, which is ignored by Git.
+your password. The refresh token is kept in the operating system keychain;
+the access token is held in memory. The client secret is in
+`strava.local.json`, which is ignored by Git.
 Never commit or share either. **Disconnect Strava** removes the saved token
 from this computer. To revoke the app at Strava too, remove it from Strava's
 connected-app settings.
@@ -144,9 +186,10 @@ connected-app settings.
 ### Public Strava webhook (recommended)
 
 The local Python app cannot receive callbacks from Strava, so the repository
-includes a small Cloudflare Worker in `cloudflare/worker.js`. It stores only
-the subscription ID and an authorization-revoked flag in Cloudflare KV; it
-does not receive ride data or access tokens. The local app checks this state
+includes a small Cloudflare Worker in `cloudflare/worker.js`. Strava may send
+activity event metadata to the Worker; it stores only the subscription ID and
+an authorization-revoked flag in Cloudflare KV, not activity data or access
+tokens. The local app checks this state
 before Strava API calls. If the Worker is configured but unreachable, Strava
 API calls fail closed; local GPX rides and history remain available. The
 webhook is not active until you deploy and register the Worker.
@@ -165,7 +208,7 @@ webhook is not active until you deploy and register the Worker.
    replacing `REPLACE_WITH_YOUR_KV_NAMESPACE_ID`.
 3. Generate two different random strings; keep the first as `VERIFY_TOKEN` and
    the second as `ADMIN_TOKEN`. For example, run
-   `python -c "import secrets; print(secrets.token_urlsafe(32))"` twice.
+   `python3 -c "import secrets; print(secrets.token_urlsafe(32))"` twice on Mac.
    Enter each value when prompted by these commands, along with the same
    Strava Client ID and Client Secret used in `strava.local.json`:
 
@@ -206,14 +249,17 @@ tested, but webhook deauthorization monitoring is inactive. See Strava's
 <https://developers.strava.com/docs/webhooks/> and
 <https://developers.strava.com/docs/getting-started/> guides.
 
-## Exact KICKR v3 connection steps
+## KICKR v5 connection steps
 
 1. **Confirm the trainer.** Check the label on the trainer or the Wahoo app to
-   verify it is the 2017 KICKR v3. Wahoo's v3 support page is
-   [here](https://support.wahoofitness.com/hc/en-us/articles/29668358586130-KICKR-v3-2017-Smart-Trainer-Information-FAQ).
+   verify it is the 2020 KICKR v5, model WFBKTR120. Wahoo's v5 support page is
+   [here](https://support.wahoofitness.com/hc/en-us/articles/29235861059986-KICKR-v5-2020-Smart-Trainer-Information-FAQ).
+   If the model differs, note the model and firmware before proceeding; do not
+   assume the v5 firmware notes apply.
 2. **Prepare it.** Put the trainer on a stable floor, plug in its power
    adapter, install the bike using the correct hub adapters, and make sure the
-   bike is secure before mounting.
+   bike is secure before mounting. With a KICKR CLIMB attached, grade commands
+   may also move the front of the bike; ensure it has room to move.
 3. **Check firmware.** If the trainer has not been used recently, open the
    Wahoo Fitness app on an iOS/Android phone, connect to the KICKR, and install
    any offered firmware update. Wahoo's firmware instructions are
@@ -224,8 +270,10 @@ tested, but webhook deauthorization monitoring is inactive. See Strava's
    may be connected. Only one app should be issuing resistance commands.
 5. **Start Ella Zwift.** Run the local Python service, open
    <http://localhost:8765> in desktop Chrome, and enable Bluetooth in the
-   computer's system settings. In the app, click **Connect KICKR**, select the
-   KICKR in Chrome's Bluetooth chooser, and approve the connection.
+   computer's system settings. Allow Chrome Bluetooth access in macOS Privacy
+   & Security settings if prompted. In the app, click **Connect KICKR**, select
+   the KICKR in Chrome's Bluetooth chooser, and approve the connection. Do not
+   pair it separately in macOS Bluetooth settings first.
 6. **Check before control.** The app reads FTMS indoor-bike data, the FTMS
    control point, trainer feature bytes, and supported incline range. It sends
    no resistance command merely by connecting. Control stays disabled if the
@@ -241,9 +289,8 @@ tested, but webhook deauthorization monitoring is inactive. See Strava's
    drops, stop pedaling; the app marks the ride paused and shows a warning.
    Trainer behavior during a disconnect is model/firmware-specific.
 
-The app's first trainer implementation requires the standard Bluetooth FTMS
-service. Wahoo documents Bluetooth and ANT+ control for KICKR models, but the
-v3's exact advertised services depend on firmware and host platform. Wahoo
+The app's trainer implementation requires the standard Bluetooth FTMS
+service. Actual advertised services depend on the trainer and firmware. Wahoo
 currently notes that some Windows trainer-control setups require an ANT+ USB
 adapter, while Mac computers with built-in Bluetooth are listed as supported
 ([device compatibility](https://support.wahoofitness.com/hc/en-us/articles/4409281095058-Device-Compatibility-for-Wahoo-smart-trainers-KICKR)).

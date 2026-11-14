@@ -481,10 +481,11 @@ function sendControl(opcode, payload = []) {
 }
 
 async function connectTrainer() {
+  let device = null;
   try {
     if (!navigator.bluetooth) throw new Error("Web Bluetooth is unavailable. Use a recent Chrome or Edge browser.");
     setMessage("#trainer-message", "Choose the KICKR in the Bluetooth device picker…");
-    const device = await navigator.bluetooth.requestDevice({
+    device = await navigator.bluetooth.requestDevice({
       acceptAllDevices: true,
       optionalServices: [FTMS_SERVICE, "00001818-0000-1000-8000-00805f9b34fb"],
     });
@@ -505,7 +506,7 @@ async function connectTrainer() {
     try {
       service = await server.getPrimaryService(FTMS_SERVICE);
     } catch {
-      throw new Error("The KICKR did not expose the standard FTMS service. This prototype does not guess proprietary Wahoo commands. Confirm firmware/model or use the ANT+ option described in the guide.");
+      throw new Error("The KICKR did not expose the standard FTMS service. Confirm the model and update its firmware in the Wahoo app. This app does not support ANT+ or proprietary Wahoo control.");
     }
     const trainer = {
       device, server, service, controlPoint: null, controlActive: false, connected: true,
@@ -567,6 +568,8 @@ async function connectTrainer() {
     $("#enable-control").disabled = !trainer.controlPoint || !trainer.zeroGradeSupported;
     renderRoute();
   } catch (error) {
+    try { if (device?.gatt?.connected) device.gatt.disconnect(); } catch { /* Device may already be disconnected. */ }
+    if (state.trainer?.device === device) state.trainer = null;
     $("#trainer-message").textContent = error.message || "Could not connect to the trainer.";
     setTag("#trainer-indicator", "NOT CONNECTED", "warning");
     $("#trainer-diagnostics").textContent = "No control command was sent.";
